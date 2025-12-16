@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
+from typing import Optional, Dict, Any
+from pydantic import validator, MySQLDsn
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "India Entry Project"
@@ -7,23 +8,23 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "changethis"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     
-    # POSTGRES_SERVER: str
-    # POSTGRES_USER: str
-    # POSTGRES_PASSWORD: str
-    # POSTGRES_DB: str
-    # SQLALCHEMY_DATABASE_URI: Optional[str] = None
+    MYSQL_SERVER: str = "localhost"
+    MYSQL_USER: str = "root"
+    MYSQL_PASSWORD: str = "280124"
+    MYSQL_DB: str = "Main"
+    SQLALCHEMY_DATABASE_URI: Optional[str] = None
 
-    # @validator("SQLALCHEMY_DATABASE_URI", pre=True)
-    # def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
-    #     if isinstance(v, str):
-    #         return v
-    #     return PostgresDsn.build(
-    #         scheme="postgresql",
-    #         user=values.get("POSTGRES_USER"),
-    #         password=values.get("POSTGRES_PASSWORD"),
-    #         host=values.get("POSTGRES_SERVER"),
-    #         path=f"/{values.get('POSTGRES_DB') or ''}",
-    #     )
+    @validator("SQLALCHEMY_DATABASE_URI", pre=True)
+    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+        if isinstance(v, str):
+            return v
+        return str(MySQLDsn.build(
+            scheme="mysql+pymysql",
+            username=values.get("MYSQL_USER"),
+            password=values.get("MYSQL_PASSWORD"),
+            host=values.get("MYSQL_SERVER"),
+            path=f"/{values.get('MYSQL_DB') or ''}",
+        ))
 
     class Config:
         case_sensitive = True
