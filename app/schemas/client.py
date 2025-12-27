@@ -1,38 +1,35 @@
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, EmailStr
 
 # Shared properties
-class UserBase(BaseModel):
+class ClientBase(BaseModel):
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
 
 # Properties to receive via API on creation
-class UserCreate(UserBase):
+class ClientCreate(ClientBase):
+    email: EmailStr
+    password: str
+    type: Literal["client"] = "client"
+
+class ClientLogin(BaseModel):
     email: EmailStr
     password: str
 
-# Properties to receive via API on update
-class UserUpdate(UserBase):
+class ClientUpdate(ClientBase):
     password: Optional[str] = None
 
-class UserInDBBase(UserBase):
+class ClientInDBBase(ClientBase):
     id: Optional[int] = None
 
     class Config:
         from_attributes = True
 
 # Additional properties to return via API
-class User(UserInDBBase):
+class Client(ClientInDBBase):
     pass
 
 # Additional properties stored in DB
-class UserInDB(UserInDBBase):
+class ClientInDB(ClientInDBBase):
     hashed_password: str
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenPayload(BaseModel):
-    sub: Optional[str] = None
