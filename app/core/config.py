@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     MYSQL_PASSWORD: str = "280124"
     MYSQL_DB: str = "Main"
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    MICROSOFT_CLIENT_ID: Optional[str] = None
+    MICROSOFT_TENANT_ID: Optional[str] = None
 
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:

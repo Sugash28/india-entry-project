@@ -1,13 +1,11 @@
 from typing import Optional, Literal
 from pydantic import BaseModel, EmailStr
 
-# Shared properties
 class ClientBase(BaseModel):
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
 
-# Properties to receive via API on creation
 class ClientCreate(ClientBase):
     email: EmailStr
     password: str
@@ -26,10 +24,10 @@ class ClientInDBBase(ClientBase):
     class Config:
         from_attributes = True
 
-# Additional properties to return via API
+
 class Client(ClientInDBBase):
     pass
 
-# Additional properties stored in DB
+
 class ClientInDB(ClientInDBBase):
     hashed_password: str
