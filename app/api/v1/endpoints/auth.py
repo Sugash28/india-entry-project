@@ -83,6 +83,7 @@ def create_client(
         )
     user = Client(
         email=user_in.email,
+        name=user_in.name,
         hashed_password=security.get_password_hash(user_in.password),
         is_active=True,
         is_superuser=False,
@@ -110,6 +111,7 @@ def create_service_provider(
         )
     user = ServiceProvider(
         email=user_in.email,
+        name=user_in.name,
         hashed_password=security.get_password_hash(user_in.password),
         is_active=True,
     )
@@ -119,7 +121,7 @@ def create_service_provider(
     return user
 
 
-# Google Login Implementation
+#--> google auth implementation
 
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -165,10 +167,10 @@ def login_google(
     if user_type == "client":
         user = db.query(Client).filter(Client.email == email).first()
         if not user:
-            # Create new Client
             password = get_random_string()
             user = Client(
                 email=email,
+                name=google_data.get("name"),
                 hashed_password=security.get_password_hash(password),
                 is_active=True,
                 is_superuser=False,
@@ -177,7 +179,6 @@ def login_google(
             db.commit()
             db.refresh(user)
         
-        # Check if user is active
         if not user.is_active:
              raise HTTPException(status_code=400, detail="Inactive user")
 
@@ -191,10 +192,10 @@ def login_google(
     elif user_type == "service_provider":
         user = db.query(ServiceProvider).filter(ServiceProvider.email == email).first()
         if not user:
-            # Create new Service Provider
             password = get_random_string()
             user = ServiceProvider(
                 email=email,
+                name=google_data.get("name"),
                 hashed_password=security.get_password_hash(password),
                 is_active=True,
             )
@@ -202,7 +203,6 @@ def login_google(
             db.commit()
             db.refresh(user)
             
-        # Check if user is active
         if not user.is_active:
              raise HTTPException(status_code=400, detail="Inactive user")
 
@@ -213,21 +213,16 @@ def login_google(
             "token_type": "bearer",
         }
 
-# Microsoft Login Implementation
+#--> Microsoft auth implementation
 
 from app.schemas.token import MicrosoftToken
 from jose import jwt
 
 def verify_microsoft_token(token: str):
     try:
-        # Microsoft keys URL
         jwks_url = f'https://login.microsoftonline.com/{settings.MICROSOFT_TENANT_ID}/discovery/v2.0/keys'
-        
-        # In a production app, you should cache these keys
         jwks = requests.get(jwks_url).json()
         
-        # Verify the token
-        # We skip audience verification here to keep it simple, but in prod verify aud=MICROSOFT_CLIENT_ID
         header = jwt.get_unverified_header(token)
         rsa_key = {}
         for key in jwks['keys']:
@@ -285,7 +280,6 @@ def login_microsoft(
     if not ms_data:
         raise HTTPException(status_code=400, detail='Invalid Microsoft token')
 
-    # Microsoft uses 'preferred_username' or 'email'
     email = ms_data.get('email') or ms_data.get('preferred_username')
     
     if not email:
@@ -293,13 +287,13 @@ def login_microsoft(
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    # Reusing the logic for user creation/retrieval
     if user_type == 'client':
         user = db.query(Client).filter(Client.email == email).first()
         if not user:
             password = get_random_string()
             user = Client(
                 email=email,
+                name=ms_data.get("name"),
                 hashed_password=security.get_password_hash(password),
                 is_active=True,
                 is_superuser=False,
@@ -324,6 +318,7 @@ def login_microsoft(
             password = get_random_string()
             user = ServiceProvider(
                 email=email,
+                name=ms_data.get("name"),
                 hashed_password=security.get_password_hash(password),
                 is_active=True,
             )

@@ -3,7 +3,7 @@ from app.core.config import settings
 from app.api.v1.api import api_router
 from app.db.session import engine
 from app.db.base import Base
-from app.models import client, service_provider
+from app.models import client, service_provider, service_provider_profile
 
 Base.metadata.create_all(bind=engine)
 

@@ -2,6 +2,7 @@ from typing import Optional, Literal
 from pydantic import BaseModel, EmailStr
 
 class ClientBase(BaseModel):
+    name: Optional[str] = None
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
