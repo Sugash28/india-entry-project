@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India Entry Project - API Testing</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://alcdn.msauth.net/browser/2.14.2/js/msal-browser.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🇮🇳 India Entry Project</h1>
+            <p class="subtitle">API Testing Interface</p>
+            <div id="tokenDisplay" class="token-display hidden">
+                <span class="token-label">Token:</span>
+                <code id="tokenValue"></code>
+                <button id="copyToken" class="btn-icon">📋</button>
+                <button id="clearToken" class="btn-icon">🗑️</button>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="auth">🔐 Authentication</button>
+            <button class="tab-btn" data-tab="client">👤 Client APIs</button>
+            <button class="tab-btn" data-tab="service-provider">💼 Service Provider APIs</button>
+        </nav>
+
+        <!-- Authentication Tab -->
+        <div id="auth" class="tab-content active">
+            <div class="grid">
+                <!-- Client Auth -->
+                <div class="card">
+                    <h2>👤 Client Authentication</h2>
+                    
+                    <div class="form-section">
+                        <h3>Sign Up</h3>
+                        <form id="clientSignupForm">
+                            <input type="text" name="name" placeholder="Full Name" required>
+                            <input type="email" name="email" placeholder="Email" required>
+                            <input type="password" name="password" placeholder="Password" required>
+                            <button type="submit" class="btn btn-primary">Sign Up</button>
+                        </form>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Login</h3>
+                        <form id="clientLoginForm">
+                            <input type="email" name="email" placeholder="Email" required>
+                            <input type="password" name="password" placeholder="Password" required>
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </form>
+                    </div>
+
+                    <div class="oauth-section">
+                        <h3>OAuth Login</h3>
+                        <div id="googleButtonClient"></div>
+                        <button id="microsoftLoginClient" class="btn btn-microsoft">
+                            <span>🔷</span> Sign in with Microsoft
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Service Provider Auth -->
+                <div class="card">
+                    <h2>💼 Service Provider Authentication</h2>
+                    
+                    <div class="form-section">
+                        <h3>Sign Up</h3>
+                        <form id="spSignupForm">
+                            <input type="text" name="name" placeholder="Full Name" required>
+                            <input type="email" name="email" placeholder="Email" required>
+                            <input type="password" name="password" placeholder="Password" required>
+                            <button type="submit" class="btn btn-primary">Sign Up</button>
+                        </form>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Login</h3>
+                        <form id="spLoginForm">
+                            <input type="email" name="email" placeholder="Email" required>
+                            <input type="password" name="password" placeholder="Password" required>
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </form>
+                    </div>
+
+                    <div class="oauth-section">
+                        <h3>OAuth Login</h3>
+                        <div id="googleButtonSP"></div>
+                        <button id="microsoftLoginSP" class="btn btn-microsoft">
+                            <span>🔷</span> Sign in with Microsoft
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client APIs Tab -->
+        <div id="client" class="tab-content">
+            <div class="grid">
+                <!-- Get Profile -->
+                <div class="card">
+                    <h2>📊 Get Profile</h2>
+                    <button id="getClientProfile" class="btn btn-primary">Get Profile</button>
+                    <div id="clientProfileDisplay" class="profile-display"></div>
+                </div>
+
+                <!-- Update Personal Details -->
+                <div class="card">
+                    <h2>👤 Update Personal Details</h2>
+                    <form id="clientPersonalForm">
+                        <input type="text" name="profile_photo" placeholder="Profile Photo URL">
+                        <input type="text" name="location_country" placeholder="Country">
+                        <input type="text" name="location_city" placeholder="City">
+                        <input type="text" name="language" placeholder="Languages (comma-separated)">
+                        <textarea name="bio" placeholder="Bio" rows="3"></textarea>
+                        <button type="submit" class="btn btn-primary">Update Personal Details</button>
+                    </form>
+                </div>
+
+                <!-- Update Company Info -->
+                <div class="card">
+                    <h2>🏢 Update Company Info</h2>
+                    <form id="clientCompanyForm">
+                        <input type="text" name="company_name" placeholder="Company Name">
+                        <input type="text" name="company_size" placeholder="Company Size">
+                        <input type="text" name="industry" placeholder="Industry">
+                        <input type="url" name="website" placeholder="Website URL">
+                        <button type="submit" class="btn btn-primary">Update Company Info</button>
+                    </form>
+                </div>
+
+                <!-- Update Contact Preferences -->
+                <div class="card">
+                    <h2>📞 Update Contact Preferences</h2>
+                    <form id="clientContactForm">
+                        <select name="preferred_contact_method">
+                            <option value="">Select Contact Method</option>
+                            <option value="email">Email</option>
+                            <option value="phone">Phone</option>
+                            <option value="both">Both</option>
+                        </select>
+                        <input type="email" name="contact_email" placeholder="Contact Email">
+                        <input type="tel" name="contact_phone" placeholder="Contact Phone">
+                        <input type="text" name="timezone" placeholder="Timezone (e.g., UTC+5:30)">
+                        <button type="submit" class="btn btn-primary">Update Contact Preferences</button>
+                    </form>
+                </div>
+
+                <!-- Update Billing Info -->
+                <div class="card">
+                    <h2>💳 Update Billing Info</h2>
+                    <form id="clientBillingForm">
+                        <input type="text" name="billing_name" placeholder="Billing Name">
+                        <input type="text" name="tax_gst_number" placeholder="Tax/GST Number">
+                        <input type="email" name="billing_contact_email" placeholder="Billing Email">
+                        <input type="tel" name="billing_contact_phone" placeholder="Billing Phone">
+                        <textarea name="billing_address" placeholder="Billing Address" rows="3"></textarea>
+                        <button type="submit" class="btn btn-primary">Update Billing Info</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Provider APIs Tab -->
+        <div id="service-provider" class="tab-content">
+            <div class="grid">
+                <!-- Get Profile -->
+                <div class="card">
+                    <h2>📊 Get Profile</h2>
+                    <button id="getSPProfile" class="btn btn-primary">Get Profile</button>
+                    <div id="spProfileDisplay" class="profile-display"></div>
+                </div>
+
+                <!-- Update Professional Info -->
+                <div class="card">
+                    <h2>💼 Update Professional Info</h2>
+                    <form id="spProfessionalForm">
+                        <input type="text" name="professional_title" placeholder="Professional Title">
+                        <input type="number" name="hourly_rate" placeholder="Hourly Rate" step="0.01">
+                        <input type="text" name="skills" placeholder="Skills (comma-separated)">
+                        <select name="availability">
+                            <option value="">Select Availability</option>
+                            <option value="full-time">Full Time</option>
+                            <option value="part-time">Part Time</option>
+                            <option value="contract">Contract</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">Update Professional Info</button>
+                    </form>
+                </div>
+
+                <!-- Add Portfolio Project -->
+                <div class="card">
+                    <h2>🎨 Add Portfolio Project</h2>
+                    <form id="spPortfolioForm">
+                        <input type="text" name="title" placeholder="Project Title" required>
+                        <textarea name="description" placeholder="Project Description" rows="3" required></textarea>
+                        <input type="url" name="url" placeholder="Project URL">
+                        <input type="text" name="technologies" placeholder="Technologies Used">
+                        <button type="submit" class="btn btn-primary">Add Portfolio Project</button>
+                    </form>
+                </div>
+
+                <!-- Add Work Experience -->
+                <div class="card">
+                    <h2>💼 Add Work Experience</h2>
+                    <form id="spExperienceForm">
+                        <input type="text" name="company" placeholder="Company Name" required>
+                        <input type="text" name="position" placeholder="Position" required>
+                        <input type="date" name="start_date" placeholder="Start Date" required>
+                        <input type="date" name="end_date" placeholder="End Date (leave empty if current)">
+                        <textarea name="description" placeholder="Job Description" rows="3"></textarea>
+                        <button type="submit" class="btn btn-primary">Add Work Experience</button>
+                    </form>
+                </div>
+
+                <!-- Add Education -->
+                <div class="card">
+                    <h2>🎓 Add Education</h2>
+                    <form id="spEducationForm">
+                        <input type="text" name="institution" placeholder="Institution Name" required>
+                        <input type="text" name="degree" placeholder="Degree" required>
+                        <input type="text" name="field_of_study" placeholder="Field of Study" required>
+                        <input type="date" name="start_date" placeholder="Start Date" required>
+                        <input type="date" name="end_date" placeholder="End Date">
+                        <button type="submit" class="btn btn-primary">Add Education</button>
+                    </form>
+                </div>
+
+                <!-- Add Certification -->
+                <div class="card">
+                    <h2>🏆 Add Certification</h2>
+                    <form id="spCertificationForm">
+                        <input type="text" name="name" placeholder="Certification Name" required>
+                        <input type="text" name="issuing_organization" placeholder="Issuing Organization" required>
+                        <input type="date" name="issue_date" placeholder="Issue Date" required>
+                        <input type="date" name="expiry_date" placeholder="Expiry Date (if applicable)">
+                        <input type="url" name="credential_url" placeholder="Credential URL">
+                        <button type="submit" class="btn btn-primary">Add Certification</button>
+                    </form>
+                </div>
+
+                <!-- Upload KYC -->
+                <div class="card">
+                    <h2>📄 Upload KYC Document</h2>
+                    <form id="spKYCForm">
+                        <input type="text" name="file_path" placeholder="KYC File Path/URL" required>
+                        <button type="submit" class="btn btn-primary">Upload KYC</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Response Display -->
+        <div class="response-section">
+            <h2>📡 API Response</h2>
+            <div id="responseDisplay" class="response-display">
+                <p class="placeholder">API responses will appear here...</p>
+            </div>
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

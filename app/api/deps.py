@@ -9,6 +9,7 @@ from app.db.session import SessionLocal
 from app.core import security
 from app.core.config import settings
 from app.models.service_provider import ServiceProvider
+from app.models.client import Client
 from app.schemas.token import TokenPayload
 
 # Define OAuth2 scheme
@@ -40,3 +41,24 @@ def get_current_service_provider(
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return user
+
+def get_current_client(
+    db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+) -> Client:
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
+    except (JWTError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+        )
+    user = db.query(Client).filter(Client.id == token_data.sub).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return user
+

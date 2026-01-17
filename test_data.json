@@ -1,0 +1,10 @@
+{
+    "profile_photo": "https://example.com/images/avatar.jpg",
+    "full_name": "Rajesh Kumar",
+    "location_country": "India",
+    "location_city": "Mumbai",
+    "language": "Hindi, English, Marathi",
+    "experience": "8 years in Financial Consulting",
+    "project_completed": 42,
+    "bio": "Experienced financial consultant helping businesses enter the Indian market. Specializing in tax regulations and compliance."
+}

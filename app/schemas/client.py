@@ -6,6 +6,33 @@ class ClientBase(BaseModel):
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
+    
+    # Personal Details
+    profile_photo: Optional[str] = None
+    location_country: Optional[str] = None
+    location_city: Optional[str] = None
+    language: Optional[str] = None
+    bio: Optional[str] = None
+    
+    # Company Information
+    company_name: Optional[str] = None
+    company_size: Optional[str] = None
+    industry: Optional[str] = None
+    website: Optional[str] = None
+    
+    # Contact Preferences
+    preferred_contact_method: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    timezone: Optional[str] = None
+    notes: Optional[str] = None
+    
+    # Billing Information
+    billing_name: Optional[str] = None
+    tax_gst_number: Optional[str] = None
+    billing_contact_email: Optional[str] = None
+    billing_contact_phone: Optional[str] = None
+    billing_address: Optional[str] = None
 
 class ClientCreate(ClientBase):
     email: EmailStr
@@ -27,7 +54,9 @@ class ClientInDBBase(ClientBase):
 
 
 class Client(ClientInDBBase):
-    pass
+    # Computed field for API response
+    completion_percentage: Optional[int] = None
+
 
 
 class ClientInDB(ClientInDBBase):
