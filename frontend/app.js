@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAuth();
     initializeClientAPIs();
     initializeServiceProviderAPIs();
+    initializeProjectAPIs();
+    initializeBiddingAPIs();
+    initializeContractAPIs();
     initializeTokenDisplay();
     initializeMSAL();
     updateUIBasedOnAuth();
@@ -122,6 +125,33 @@ async function apiRequest(endpoint, method = 'GET', body = null, requiresAuth = 
     if (body && method !== 'GET') {
         options.body = JSON.stringify(body);
     }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || 'Request failed');
+        }
+
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+async function apiMultipartRequest(endpoint, method = 'POST', formData = null, requiresAuth = false) {
+    const headers = {};
+
+    if (requiresAuth && currentToken) {
+        headers['Authorization'] = `Bearer ${currentToken}`;
+    }
+
+    const options = {
+        method,
+        headers,
+        body: formData,
+    };
 
     try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
@@ -675,4 +705,345 @@ function displaySPProfile(data) {
         </div>
         <div class="completion-text">Profile Completion: ${completion}%</div>
     `;
+}
+
+// ==================== PROJECT APIs ====================
+
+function initializeProjectAPIs() {
+    // Create Project
+    document.getElementById('createProjectForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        setLoading(btn, true);
+
+        const data = getFormData(e.target);
+        const result = await apiRequest('/client/projects/', 'POST', data, true);
+
+        setLoading(btn, false);
+
+        if (result.success) {
+            displayResponse(result.data);
+            showToast('Project created successfully!', 'success');
+            e.target.reset();
+            refreshMyProjects();
+        } else {
+            displayResponse({ error: result.error }, true);
+            showToast(result.error, 'error');
+        }
+    });
+
+    // Refresh My Projects
+    document.getElementById('refreshMyProjects')?.addEventListener('click', refreshMyProjects);
+}
+
+async function refreshMyProjects() {
+    const btn = document.getElementById('refreshMyProjects');
+    const list = document.getElementById('myProjectsList');
+
+    setLoading(btn, true);
+    const result = await apiRequest('/client/projects/', 'GET', null, true);
+    setLoading(btn, false);
+
+    if (result.success) {
+        renderProjects(result.data, list, true);
+        showToast('Projects list updated', 'success');
+    } else {
+        showToast(result.error, 'error');
+    }
+}
+
+function renderProjects(projects, container, isOwner = false) {
+    if (!projects || projects.length === 0) {
+        container.innerHTML = '<p class="placeholder">No projects found.</p>';
+        return;
+    }
+
+    container.innerHTML = projects.map(p => `
+        <div class="item-card">
+            <h4>${p.title}</h4>
+            <div class="meta">${p.budget_range || 'No budget'} | ${p.currency || ''} | ${p.project_duration || 'No duration'}</div>
+            <div class="description">${p.description}</div>
+            <div class="tags">
+                ${(p.skills_required || '').split(',').map(s => s.trim() ? `<span class="item-tag">${s.trim()}</span>` : '').join('')}
+            </div>
+            ${isOwner ? `
+                <div class="item-actions">
+                    <button class="btn btn-primary btn-sm" onclick="viewProjectBids(${p.id}, '${p.title.replace(/'/g, "\\'")}')">View Bids</button>
+                    <div id="bids-container-${p.id}" class="bids-list hidden"></div>
+                </div>
+            ` : `
+                <div class="item-actions">
+                    <button class="btn btn-primary btn-sm" onclick="showBidForm(${p.id}, '${p.title.replace(/'/g, "\\'")}')">Submit Bid</button>
+                </div>
+            `}
+        </div>
+    `).join('');
+}
+
+// ==================== BIDDING APIs ====================
+
+function initializeBiddingAPIs() {
+    // Refresh Available Projects
+    document.getElementById('refreshAvailableProjects')?.addEventListener('click', async (e) => {
+        setLoading(e.target, true);
+        // Note: For now we use the same endpoint but SP should ideally have a browse projects endpoint
+        // For testing, we'll allow SP to see all projects or we should implement a public listing
+        // Let's try to get projects from client projects endpoint (might fail if auth check is strict)
+        // Actually, let's just use the same /client/projects/ for testing if SP has access or create a new one.
+        // For this task, I'll assume SP can list projects they can bid on.
+        const result = await apiRequest('/client/projects/', 'GET', null, true);
+        setLoading(e.target, false);
+
+        if (result.success) {
+            renderProjects(result.data, document.getElementById('availableProjectsList'), false);
+        } else {
+            showToast(result.error, 'error');
+        }
+    });
+
+    // Refresh My Bids
+    document.getElementById('refreshMyBids')?.addEventListener('click', refreshMyBids);
+}
+
+async function refreshMyBids() {
+    const btn = document.getElementById('refreshMyBids');
+    const list = document.getElementById('myBidsList');
+
+    setLoading(btn, true);
+    const result = await apiRequest('/service-provider/my-bids', 'GET', null, true);
+    setLoading(btn, false);
+
+    if (result.success) {
+        if (!result.data || result.data.length === 0) {
+            list.innerHTML = '<p class="placeholder">No bids submitted yet.</p>';
+            return;
+        }
+
+        list.innerHTML = result.data.map(b => `
+            <div class="item-card">
+                <h4>Project #${b.project_id}</h4>
+                <div class="meta">Amount: ${b.bid_amount} ${b.currency}</div>
+                <div class="description">${b.cover_letter}</div>
+                <div class="status-badge ${b.status}">${b.status.toUpperCase()}</div>
+            </div>
+        `).join('');
+        showToast('Bids list updated', 'success');
+    } else {
+        showToast(result.error, 'error');
+    }
+}
+
+window.viewProjectBids = async function (projectId, projectTitle) {
+    const container = document.getElementById(`bids-container-${projectId}`);
+
+    if (!container.classList.contains('hidden')) {
+        container.classList.add('hidden');
+        return;
+    }
+
+    container.innerHTML = '<p class="loading">Loading bids...</p>';
+    container.classList.remove('hidden');
+
+    const result = await apiRequest(`/client/projects/${projectId}/bids`, 'GET', null, true);
+
+    if (result.success) {
+        if (!result.data || result.data.length === 0) {
+            container.innerHTML = '<p class="placeholder">No bids yet.</p>';
+            return;
+        }
+
+        container.innerHTML = result.data.map(b => `
+            <div class="bid-item">
+                <div class="bid-meta">Amount: ${b.bid_amount} ${b.currency} | Status: ${b.status}</div>
+                <div class="bid-letter">${b.cover_letter}</div>
+                 ${b.status === 'pending' ? `
+                     <button class="btn btn-primary btn-sm" onclick="acceptBid(${projectId}, ${b.id})">Accept Bid</button>
+                 ` : ''}
+                 ${b.status === 'accepted' ? `
+                     <button class="btn btn-success btn-sm" onclick="showContractForm(${projectId}, ${b.id}, '${projectTitle.replace(/'/g, "\\'")}')">Sign Contract</button>
+                 ` : ''}
+             </div>
+        `).join('');
+    } else {
+        container.innerHTML = `<p class="error">${result.error}</p>`;
+    }
+};
+
+window.acceptBid = async function (projectId, bidId) {
+    if (!confirm('Are you sure you want to accept this bid? This will reject all other bids.')) return;
+
+    const result = await apiRequest(`/client/projects/${projectId}/bids/${bidId}/accept`, 'PUT', null, true);
+
+    if (result.success) {
+        showToast('Bid accepted successfully!', 'success');
+        refreshMyProjects();
+    } else {
+        showToast(result.error, 'error');
+    }
+}
+
+window.showBidForm = function (projectId, projectTitle) {
+    const bidAmount = prompt(`Enter Bid Amount for "${projectTitle}":`);
+    if (bidAmount === null) return;
+
+    const currency = prompt(`Enter Currency (e.g. USD):`, 'USD');
+    if (currency === null) return;
+
+    const coverLetter = prompt(`Enter Cover Letter:`);
+    if (coverLetter === null) return;
+
+    submitBid(projectId, {
+        bid_amount: parseInt(bidAmount),
+        currency: currency,
+        cover_letter: coverLetter
+    });
+};
+
+
+// ==================== CONTRACT APIs ====================
+
+function initializeContractAPIs() {
+    // Refresh My Contracts
+    document.getElementById('refreshMyContracts')?.addEventListener('click', refreshMyContracts);
+    document.getElementById('refreshMyContractsSP')?.addEventListener('click', refreshMyContractsSP);
+
+    // Create Contract Form (Client)
+    document.getElementById('createContractForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        setLoading(btn, true);
+
+        const formData = new FormData(e.target);
+        const result = await apiMultipartRequest('/client/contracts/', 'POST', formData, true);
+
+        setLoading(btn, false);
+
+        if (result.success) {
+            displayResponse(result.data);
+            showToast('Contract signed and saved successfully!', 'success');
+            hideContractForm();
+            refreshMyContracts();
+        } else {
+            displayResponse({ error: result.error }, true);
+            showToast(result.error, 'error');
+        }
+    });
+
+    // Sign Contract Form (SP)
+    document.getElementById('spSignContractForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const contractId = document.getElementById('spContractId').value;
+        setLoading(btn, true);
+
+        const formData = new FormData(e.target);
+        const result = await apiMultipartRequest(`/client/contracts/${contractId}/sign/service-provider`, 'POST', formData, true);
+
+        setLoading(btn, false);
+
+        if (result.success) {
+            displayResponse(result.data);
+            showToast('Contract signed by you!', 'success');
+            hideSPContractForm();
+            refreshMyContractsSP();
+        } else {
+            displayResponse({ error: result.error }, true);
+            showToast(result.error, 'error');
+        }
+    });
+}
+
+window.showContractForm = function (projectId, bidId, projectTitle) {
+    document.getElementById('contractProjectId').value = projectId;
+    document.getElementById('contractBidId').value = bidId;
+    document.getElementById('contractProjectTitle').textContent = projectTitle;
+    document.getElementById('contractFormSection').classList.remove('hidden');
+    document.getElementById('contractFormSection').scrollIntoView({ behavior: 'smooth' });
+};
+
+window.hideContractForm = function () {
+    document.getElementById('contractFormSection').classList.add('hidden');
+    document.getElementById('createContractForm').reset();
+};
+
+window.showSPContractForm = function (contractId, projectId) {
+    document.getElementById('spContractId').value = contractId;
+    document.getElementById('spContractProjectIdDisplay').textContent = projectId;
+    document.getElementById('spContractFormSection').classList.remove('hidden');
+    document.getElementById('spContractFormSection').scrollIntoView({ behavior: 'smooth' });
+};
+
+window.hideSPContractForm = function () {
+    document.getElementById('spContractFormSection').classList.add('hidden');
+    document.getElementById('spSignContractForm').reset();
+};
+
+async function refreshMyContracts() {
+    const btn = document.getElementById('refreshMyContracts');
+    const list = document.getElementById('myContractsList');
+
+    setLoading(btn, true);
+    const result = await apiRequest('/client/contracts/', 'GET', null, true);
+    setLoading(btn, false);
+
+    if (result.success) {
+        renderContracts(result.data, list, 'client');
+        showToast('Contracts list updated', 'success');
+    } else {
+        showToast(result.error, 'error');
+    }
+}
+
+async function refreshMyContractsSP() {
+    const btn = document.getElementById('refreshMyContractsSP');
+    const list = document.getElementById('myContractsListSP');
+
+    setLoading(btn, true);
+    const result = await apiRequest('/client/contracts/service-provider', 'GET', null, true);
+    setLoading(btn, false);
+
+    if (result.success) {
+        renderContracts(result.data, list, 'service_provider');
+        showToast('Contracts list updated', 'success');
+    } else {
+        showToast(result.error, 'error');
+    }
+}
+
+function renderContracts(contracts, container, role) {
+    if (!contracts || contracts.length === 0) {
+        container.innerHTML = '<p class="placeholder">No contracts yet.</p>';
+        return;
+    }
+
+    container.innerHTML = contracts.map(c => `
+        <div class="item-card">
+            <h4>Contract #${c.id} for Project #${c.project_id}</h4>
+            <div class="meta">Status: <span class="status-badge ${c.status}">${c.status.toUpperCase()}</span> | Created: ${new Date(c.created_at).toLocaleDateString()}</div>
+            <div class="description">
+                <strong>Terms:</strong><br>
+                ${c.terms_and_conditions.replace(/\n/g, '<br>')}
+            </div>
+            
+            <div class="signatures-grid">
+                ${c.client_signature_path ? `
+                    <div class="signature-display">
+                        <strong>Client Signature:</strong><br>
+                        <img src="http://localhost:8000/static/${c.client_signature_path}" alt="Client Signature" style="max-width: 150px; border: 1px solid #ddd; margin-top: 5px; background: white;">
+                    </div>
+                ` : ''}
+                
+                ${c.service_provider_signature_path ? `
+                    <div class="signature-display">
+                        <strong>Provider Signature:</strong><br>
+                        <img src="http://localhost:8000/static/${c.service_provider_signature_path}" alt="Provider Signature" style="max-width: 150px; border: 1px solid #ddd; margin-top: 5px; background: white;">
+                    </div>
+                ` : (role === 'service_provider' && c.status === 'client_signed' ? `
+                    <div class="signature-placeholder">
+                        <button class="btn btn-success btn-sm" onclick="showSPContractForm(${c.id}, ${c.project_id})">Sign This Contract</button>
+                    </div>
+                ` : '<strong>Provider Signature:</strong><br><i>Waiting for provider signature...</i>')}
+            </div>
+        </div>
+    `).join('');
 }

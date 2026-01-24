@@ -6,33 +6,46 @@ from app.api import deps
 from app.models.service_provider import (
     ServiceProvider, PortfolioProject, WorkExperience, Education, Certification
 )
+from app.models.project import Project
+from app.models.bid import Bid
 from app.schemas import service_provider as schemas
+from app.schemas import bid as bid_schemas
 
 router = APIRouter()
 
+@router.get("/my-bids", response_model=List[bid_schemas.Bid])
+def get_my_bids(
+    db: Session = Depends(deps.get_db),
+    current_service_provider: ServiceProvider = Depends(deps.get_current_service_provider),
+) -> Any:
+    """
+    Get all bids submitted by the current service provider.
+    """
+    return db.query(Bid).filter(Bid.service_provider_id == current_service_provider.id).all()
+
 def calculate_completion_percentage(sp: ServiceProvider) -> int:
     score = 0
-    # 1. Professional Summary (Title, Rate, Skills, Availability) - 20%
+    
     if sp.professional_title and sp.hourly_rate and sp.skills:
         score += 20
     
-    # 2. KYC - 20%
+    
     if sp.kyc_file:
         score += 20
         
-    # 3. Portfolio - 15%
+    
     if sp.portfolio_projects:
         score += 15
         
-    # 4. Work Experience - 15%
+    
     if sp.work_experiences:
         score += 15
         
-    # 5. Education - 15%
+    
     if sp.educations:
         score += 15
         
-    # 6. Certification - 15%
+    
     if sp.certifications:
         score += 15
         
@@ -46,7 +59,7 @@ def get_current_service_provider_profile(
     """
     Get current service provider profile with completion percentage.
     """
-    # Calculate percentage
+    
     current_service_provider.completion_percentage = calculate_completion_percentage(current_service_provider)
     return current_service_provider
 
@@ -162,3 +175,59 @@ def upload_kyc_document(
     db.refresh(current_service_provider)
     current_service_provider.completion_percentage = calculate_completion_percentage(current_service_provider)
     return current_service_provider
+
+@router.post("/projects/{project_id}/bid", response_model=bid_schemas.Bid)
+def create_project_bid(
+    *,
+    db: Session = Depends(deps.get_db),
+    project_id: int,
+    bid_in: bid_schemas.BidCreate,
+    current_service_provider: ServiceProvider = Depends(deps.get_current_service_provider),
+) -> Any:
+    """
+    Submit a bid for a project.
+    """
+    
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
+    
+    bid = Bid(
+        **bid_in.model_dump(),
+        project_id=project_id,
+        service_provider_id=current_service_provider.id
+    )
+    db.add(bid)
+    db.commit()
+    db.refresh(bid)
+    return bid
+
+@router.put("/bids/{bid_id}", response_model=bid_schemas.Bid)
+def update_project_bid(
+    *,
+    db: Session = Depends(deps.get_db),
+    bid_id: int,
+    bid_in: bid_schemas.BidUpdate,
+    current_service_provider: ServiceProvider = Depends(deps.get_current_service_provider),
+) -> Any:
+    """
+    Update an existing bid.
+    """
+    bid = db.query(Bid).filter(Bid.id == bid_id, Bid.service_provider_id == current_service_provider.id).first()
+    if not bid:
+        raise HTTPException(
+            status_code=404,
+            detail="Bid not found or you don't have permission to update it",
+        )
+    
+    update_data = bid_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(bid, field, value)
+    
+    db.add(bid)
+    db.commit()
+    db.refresh(bid)
+    return bid

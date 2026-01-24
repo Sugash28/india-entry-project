@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://alcdn.msauth.net/browser/2.14.2/js/msal-browser.min.js"></script>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -34,7 +36,7 @@
                 <!-- Client Auth -->
                 <div class="card">
                     <h2>👤 Client Authentication</h2>
-                    
+
                     <div class="form-section">
                         <h3>Sign Up</h3>
                         <form id="clientSignupForm">
@@ -66,7 +68,7 @@
                 <!-- Service Provider Auth -->
                 <div class="card">
                     <h2>💼 Service Provider Authentication</h2>
-                    
+
                     <div class="form-section">
                         <h3>Sign Up</h3>
                         <form id="spSignupForm">
@@ -161,6 +163,56 @@
                         <button type="submit" class="btn btn-primary">Update Billing Info</button>
                     </form>
                 </div>
+
+                <!-- Create Project -->
+                <div class="card">
+                    <h2>🚀 Create Project</h2>
+                    <form id="createProjectForm">
+                        <input type="text" name="title" placeholder="Project Title" required>
+                        <textarea name="description" placeholder="Project Description" rows="3" required></textarea>
+                        <input type="text" name="budget_range" placeholder="Budget Range (e.g. $1000-$5000)">
+                        <input type="text" name="currency" placeholder="Currency (USD, INR)">
+                        <input type="text" name="project_duration" placeholder="Duration (e.g. 1 month)">
+                        <input type="text" name="skills_required" placeholder="Skills Required (comma-separated)">
+                        <button type="submit" class="btn btn-primary">Create Project</button>
+                    </form>
+                </div>
+
+                <!-- My Projects -->
+                <div class="card full-width">
+                    <h2>📋 My Projects</h2>
+                    <button id="refreshMyProjects" class="btn btn-primary">Refresh List</button>
+                    <div id="myProjectsList" class="item-list"></div>
+                </div>
+
+                <!-- Create Contract -->
+                <div id="contractFormSection" class="card full-width hidden">
+                    <h2>📄 Sign Contract for Project: <span id="contractProjectTitle"></span></h2>
+                    <form id="createContractForm">
+                        <input type="hidden" name="project_id" id="contractProjectId">
+                        <input type="hidden" name="bid_id" id="contractBidId">
+                        <div class="form-section">
+                            <label>Contract Terms & Conditions</label>
+                            <textarea name="terms_and_conditions" id="contractTerms"
+                                placeholder="Enter contract terms..." rows="10" required></textarea>
+                        </div>
+                        <div class="form-section">
+                            <label>Upload Signature Photo</label>
+                            <input type="file" name="signature_photo" id="signaturePhoto" accept="image/*" required>
+                        </div>
+                        <div class="item-actions">
+                            <button type="submit" class="btn btn-primary">Sign & Save Contract</button>
+                            <button type="button" class="btn btn-secondary" onclick="hideContractForm()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- My Contracts -->
+                <div class="card full-width">
+                    <h2>📄 My Contracts</h2>
+                    <button id="refreshMyContracts" class="btn btn-primary">Refresh Contracts</button>
+                    <div id="myContractsList" class="item-list"></div>
+                </div>
             </div>
         </div>
 
@@ -250,6 +302,44 @@
                         <button type="submit" class="btn btn-primary">Upload KYC</button>
                     </form>
                 </div>
+
+                <!-- Browse Projects & Bid -->
+                <div class="card full-width">
+                    <h2>🌐 Browse Projects & Bid</h2>
+                    <button id="refreshAvailableProjects" class="btn btn-primary">Browse Projects</button>
+                    <div id="availableProjectsList" class="item-list"></div>
+                </div>
+
+                <!-- My Bids -->
+                <div class="card full-width">
+                    <h2>💰 My Bids</h2>
+                    <button id="refreshMyBids" class="btn btn-primary">My Bids</button>
+                    <div id="myBidsList" class="item-list"></div>
+                </div>
+
+                <!-- Sign Contract (SP) -->
+                <div id="spContractFormSection" class="card full-width hidden">
+                    <h2>📄 Sign Contract for Project #<span id="spContractProjectIdDisplay"></span></h2>
+                    <form id="spSignContractForm">
+                        <input type="hidden" name="contract_id" id="spContractId">
+                        <div class="form-section">
+                            <label>Upload Your Signature Photo</label>
+                            <input type="file" name="signature_photo" id="spSignaturePhoto" accept="image/*" required>
+                        </div>
+                        <div class="item-actions">
+                            <button type="submit" class="btn btn-primary">Sign & Confirm</button>
+                            <button type="button" class="btn btn-secondary"
+                                onclick="hideSPContractForm()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- My Contracts (SP) -->
+                <div class="card full-width">
+                    <h2>📄 My Contracts</h2>
+                    <button id="refreshMyContractsSP" class="btn btn-primary">Refresh Contracts</button>
+                    <div id="myContractsListSP" class="item-list"></div>
+                </div>
             </div>
         </div>
 
@@ -267,4 +357,5 @@
 
     <script src="app.js"></script>
 </body>
+
 </html>
