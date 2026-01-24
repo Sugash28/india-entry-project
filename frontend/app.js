@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeProjectAPIs();
     initializeBiddingAPIs();
     initializeContractAPIs();
+    initializeProjectLifecycleAPIs();
     initializeTokenDisplay();
     initializeMSAL();
     updateUIBasedOnAuth();
@@ -766,14 +767,26 @@ function renderProjects(projects, container, isOwner = false) {
             <div class="tags">
                 ${(p.skills_required || '').split(',').map(s => s.trim() ? `<span class="item-tag">${s.trim()}</span>` : '').join('')}
             </div>
+            <div class="status-row">
+                <span class="status-badge ${p.status}">${p.status.toUpperCase()}</span>
+                ${p.escrow_funded === 'released' ? '<span class="status-badge fully_signed">PAID</span>' : ''}
+            </div>
             ${isOwner ? `
                 <div class="item-actions">
                     <button class="btn btn-primary btn-sm" onclick="viewProjectBids(${p.id}, '${p.title.replace(/'/g, "\\'")}')">View Bids</button>
+                    ${p.status === 'awaiting_review' ? `
+                        <button class="btn btn-success btn-sm" onclick="showReviewSection(${p.id}, '${p.title.replace(/'/g, "\\'")}', '${p.submission_github_link}', '${p.submission_pdf_path}')">Review & Release Funds</button>
+                    ` : ''}
                     <div id="bids-container-${p.id}" class="bids-list hidden"></div>
                 </div>
             ` : `
                 <div class="item-actions">
-                    <button class="btn btn-primary btn-sm" onclick="showBidForm(${p.id}, '${p.title.replace(/'/g, "\\'")}')">Submit Bid</button>
+                    ${p.status === 'open' ? `
+                        <button class="btn btn-primary btn-sm" onclick="showBidForm(${p.id}, '${p.title.replace(/'/g, "\\'")}')">Submit Bid</button>
+                    ` : ''}
+                    ${p.status === 'in_progress' ? `
+                        <button class="btn btn-success btn-sm" onclick="showSubmitWorkForm(${p.id})">Submit Work</button>
+                    ` : ''}
                 </div>
             `}
         </div>

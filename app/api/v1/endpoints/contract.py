@@ -121,6 +121,11 @@ async def sign_contract_sp(
     contract.service_provider_signature_path = f"uploads/signatures/{file_name}"
     contract.status = "fully_signed"
     
+    # Update project status to in_progress
+    project = db.query(Project).filter(Project.id == contract.project_id).first()
+    if project:
+        project.status = "in_progress"
+    
     db.commit()
     db.refresh(contract)
     return contract

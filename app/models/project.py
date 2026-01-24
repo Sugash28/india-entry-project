@@ -12,7 +12,14 @@ class Project(Base):
     currency = Column(String, nullable=True)  
     project_duration = Column(String, nullable=True)  
     skills_required = Column(String, nullable=True)  
-    status = Column(String, default="open")  
+    status = Column(String, default="open")  # open, pending_contract, in_progress, awaiting_review, completed, cancelled
+    
+    # Work Submission Fields
+    submission_pdf_path = Column(String, nullable=True)
+    submission_github_link = Column(String, nullable=True)
+    
+    # Escrow / Funds
+    escrow_funded = Column(String, default="no")  # no, yes, released
     
     # Foreign key 
     client_id = Column(Integer, ForeignKey("client.id"), nullable=False)

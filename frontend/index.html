@@ -185,6 +185,20 @@
                     <div id="myProjectsList" class="item-list"></div>
                 </div>
 
+                <!-- Review Work & Release Funds (Client) -->
+                <div id="clientReviewSection" class="card full-width hidden">
+                    <h2>🔍 Review Work: <span id="reviewProjectTitle"></span></h2>
+                    <div class="form-section">
+                        <p><strong>GitHub Link:</strong> <a id="reviewGithubLink" href="#" target="_blank"></a></p>
+                        <p><strong>Work Document (PDF):</strong> <a id="reviewPdfLink" href="#" target="_blank">View
+                                PDF</a></p>
+                    </div>
+                    <div class="item-actions">
+                        <button id="releaseFundsBtn" class="btn btn-success">Release Funds & Complete Project</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideReviewSection()">Close</button>
+                    </div>
+                </div>
+
                 <!-- Create Contract -->
                 <div id="contractFormSection" class="card full-width hidden">
                     <h2>📄 Sign Contract for Project: <span id="contractProjectTitle"></span></h2>
@@ -315,6 +329,28 @@
                     <h2>💰 My Bids</h2>
                     <button id="refreshMyBids" class="btn btn-primary">My Bids</button>
                     <div id="myBidsList" class="item-list"></div>
+                </div>
+
+                <!-- Submit Project Work (SP) -->
+                <div id="spSubmitWorkSection" class="card full-width hidden">
+                    <h2>🚀 Submit Completed Work: Project #<span id="submitWorkProjectIdDisplay"></span></h2>
+                    <form id="spSubmitWorkForm">
+                        <input type="hidden" name="project_id" id="submitWorkProjectId">
+                        <div class="form-section">
+                            <label>GitHub Repository Link</label>
+                            <input type="url" name="github_link" id="submitGithubLink"
+                                placeholder="https://github.com/..." required>
+                        </div>
+                        <div class="form-section">
+                            <label>Completed Project Documentation (PDF)</label>
+                            <input type="file" name="work_pdf" id="submitWorkPdf" accept="application/pdf" required>
+                        </div>
+                        <div class="item-actions">
+                            <button type="submit" class="btn btn-primary">Submit for Review</button>
+                            <button type="button" class="btn btn-secondary"
+                                onclick="hideSubmitWorkForm()">Cancel</button>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- Sign Contract (SP) -->

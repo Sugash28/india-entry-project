@@ -10,6 +10,9 @@ class ProjectBase(BaseModel):
     project_duration: Optional[str] = None
     skills_required: Optional[str] = None
     status: Optional[str] = None
+    submission_pdf_path: Optional[str] = None
+    submission_github_link: Optional[str] = None
+    escrow_funded: Optional[str] = None
 
 class ProjectCreate(BaseModel):
     title: str
