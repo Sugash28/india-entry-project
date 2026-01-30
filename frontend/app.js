@@ -1060,3 +1060,96 @@ function renderContracts(contracts, container, role) {
         </div>
     `).join('');
 }
+
+// ==================== PROJECT LIFECYCLE APIs ====================
+
+function initializeProjectLifecycleAPIs() {
+    // Submit Work Form (SP)
+    document.getElementById('spSubmitWorkForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const projectId = document.getElementById('submitWorkProjectId').value;
+        setLoading(btn, true);
+
+        const formData = new FormData(e.target);
+        const result = await apiMultipartRequest(`/client/projects/${projectId}/submit-work`, 'POST', formData, true);
+
+        setLoading(btn, false);
+
+        if (result.success) {
+            displayResponse(result.data);
+            showToast('Work submitted successfully for review!', 'success');
+            hideSubmitWorkForm();
+            refreshAvailableProjects(); // SP view
+        } else {
+            displayResponse({ error: result.error }, true);
+            showToast(result.error, 'error');
+        }
+    });
+
+    // Release Funds Button (Client)
+    document.getElementById('releaseFundsBtn')?.addEventListener('click', async (e) => {
+        const projectId = sessionStorage.getItem('currentReviewProjectId');
+        if (!projectId) return;
+
+        setLoading(e.target, true);
+        const result = await apiRequest(`/client/projects/${projectId}/release-funds`, 'PUT', null, true);
+        setLoading(e.target, false);
+
+        if (result.success) {
+            displayResponse(result.data);
+            showToast('Funds released and project completed!', 'success');
+            hideReviewSection();
+            refreshMyProjects();
+        } else {
+            displayResponse({ error: result.error }, true);
+            showToast(result.error, 'error');
+        }
+    });
+}
+
+window.showSubmitWorkForm = function (projectId) {
+    document.getElementById('submitWorkProjectId').value = projectId;
+    document.getElementById('submitWorkProjectIdDisplay').textContent = projectId;
+    document.getElementById('spSubmitWorkSection').classList.remove('hidden');
+    document.getElementById('spSubmitWorkSection').scrollIntoView({ behavior: 'smooth' });
+};
+
+window.hideSubmitWorkForm = function () {
+    document.getElementById('spSubmitWorkSection').classList.add('hidden');
+    document.getElementById('spSubmitWorkForm').reset();
+};
+
+window.showReviewSection = function (projectId, title, githubLink, pdfPath) {
+    sessionStorage.setItem('currentReviewProjectId', projectId);
+    document.getElementById('reviewProjectTitle').textContent = title;
+
+    const githubElem = document.getElementById('reviewGithubLink');
+    githubElem.href = githubLink;
+    githubElem.textContent = githubLink;
+
+    document.getElementById('reviewPdfLink').href = `http://localhost:8000/static/${pdfPath}`;
+
+    document.getElementById('clientReviewSection').classList.remove('hidden');
+    document.getElementById('clientReviewSection').scrollIntoView({ behavior: 'smooth' });
+};
+
+window.hideReviewSection = function () {
+    document.getElementById('clientReviewSection').classList.add('hidden');
+    sessionStorage.removeItem('currentReviewProjectId');
+};
+
+async function refreshAvailableProjects() {
+    const btn = document.getElementById('refreshAvailableProjects');
+    if (!btn) return;
+
+    setLoading(btn, true);
+    const result = await apiRequest('/client/projects/', 'GET', null, true);
+    setLoading(btn, false);
+
+    if (result.success) {
+        renderProjects(result.data, document.getElementById('availableProjectsList'), false);
+    } else {
+        showToast(result.error, 'error');
+    }
+}
