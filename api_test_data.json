@@ -1,0 +1,105 @@
+{
+    "authentication": [
+        {
+            "name": "Signup Client",
+            "method": "POST",
+            "endpoint": "/api/v1/auth/signup/client",
+            "payload": {
+                "email": "tester_client@example.com",
+                "password": "password123",
+                "full_name": "Test Client"
+            }
+        },
+        {
+            "name": "Signup Service Provider",
+            "method": "POST",
+            "endpoint": "/api/v1/auth/signup/service-provider",
+            "payload": {
+                "email": "tester_sp@example.com",
+                "password": "password123",
+                "full_name": "Test Provider"
+            }
+        }
+    ],
+    "profile_management": [
+        {
+            "name": "Update Client Company Info",
+            "method": "PUT",
+            "endpoint": "/api/v1/client/company-info",
+            "payload": {
+                "company_name": "Antigravity Labs",
+                "company_size": "50-100",
+                "industry": "Software Engineering",
+                "website": "https://antigravity.ai"
+            }
+        },
+        {
+            "name": "Update SP Professional Info",
+            "method": "PUT",
+            "endpoint": "/api/v1/service-provider/professional-info",
+            "payload": {
+                "professional_title": "Senior Full-stack Developer",
+                "hourly_rate": "50",
+                "skills": "Python, FastAPI, Javascript, React",
+                "availability_status": "Available"
+            }
+        }
+    ],
+    "project_lifecycle": [
+        {
+            "name": "Create Project",
+            "method": "POST",
+            "endpoint": "/api/v1/client/projects/",
+            "payload": {
+                "title": "E-commerce Platform Refactoring",
+                "description": "Refactor the legacy database schema to PostgreSQL.",
+                "budget_range": "1000 - 5000",
+                "currency": "USD",
+                "project_duration": "2 months",
+                "skills_required": "PostgreSQL, Python, SQL"
+            }
+        },
+        {
+            "name": "Submit Bid (SP)",
+            "method": "POST",
+            "endpoint": "/api/v1/service-provider/projects/{project_id}/bid",
+            "payload": {
+                "bid_amount": 2500,
+                "currency": "USD",
+                "cover_letter": "I have 5 years of experience in DB refactoring. I can handle this in 6 weeks."
+            }
+        },
+        {
+            "name": "Accept Bid (Client)",
+            "method": "PUT",
+            "endpoint": "/api/v1/client/projects/{project_id}/bids/{bid_id}/accept",
+            "payload": {}
+        }
+    ],
+    "contracts_and_escrow": [
+        {
+            "name": "Initiate Contract (Client)",
+            "method": "POST",
+            "endpoint": "/api/v1/client/contracts/",
+            "notes": "Requires Multipart Form Data (project_id, bid_id, terms_and_conditions, signature_photo)"
+        },
+        {
+            "name": "Sign Contract (SP)",
+            "method": "POST",
+            "endpoint": "/api/v1/client/contracts/{contract_id}/sign/service-provider",
+            "notes": "Requires Multipart Form Data (signature_photo)"
+        },
+        {
+            "name": "Submit Work (SP)",
+            "method": "POST",
+            "endpoint": "/api/v1/client/projects/{project_id}/submit-work",
+            "notes": "Requires Multipart Form Data (github_link, work_pdf)"
+        },
+        {
+            "name": "Release Funds (Client)",
+            "method": "PUT",
+            "endpoint": "/api/v1/client/projects/{project_id}/release-funds",
+            "payload": {}
+        }
+    ]
+}

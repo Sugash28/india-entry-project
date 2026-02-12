@@ -787,6 +787,13 @@ function renderProjects(projects, container, isOwner = false) {
                     ${p.status === 'in_progress' ? `
                         <button class="btn btn-success btn-sm" onclick="showSubmitWorkForm(${p.id})">Submit Work</button>
                     ` : ''}
+                    ${p.status === 'awaiting_review' || p.status === 'completed' ? `
+                        <div class="submission-details" style="margin-top: 10px; font-size: 0.85rem; opacity: 0.8;">
+                            <strong>Your Submission:</strong><br>
+                            <a href="${p.submission_github_link}" target="_blank">GitHub</a> | 
+                            <a href="http://localhost:8000/static/${p.submission_pdf_path}" target="_blank">PDF doc</a>
+                        </div>
+                    ` : ''}
                 </div>
             `}
         </div>

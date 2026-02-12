@@ -1,4 +1,4 @@
-from typing import Generator, Optional
+from typing import Generator, Optional, Any
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -62,3 +62,24 @@ def get_current_client(
         raise HTTPException(status_code=400, detail="Inactive user")
     return user
 
+def get_current_active_user(
+    db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+) -> Any:
+    """
+    Authenticate the user as a Client or a Service Provider.
+    Used for endpoints that provide mutual visibility.
+    """
+    # Try client first
+    try:
+        return get_current_client(db, token)
+    except HTTPException:
+        pass
+    
+    # Try service provider
+    try:
+        return get_current_service_provider(db, token)
+    except HTTPException:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials as Client or ServiceProvider",
+        )

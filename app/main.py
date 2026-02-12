@@ -24,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 @app.get("/")
 def root():

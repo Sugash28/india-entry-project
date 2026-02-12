@@ -36,27 +36,46 @@ def create_project(
 @router.get("/", response_model=List[schemas.Project])
 def get_projects(
     db: Session = Depends(deps.get_db),
-    current_client: Client = Depends(deps.get_current_client),
+    current_user: Any = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Get all projects for the current client.
+    Get all projects relevant to the current user.
+    - For Clients: Projects they created.
+    - For Service Providers: Projects they have accepted bids on.
     """
-    return db.query(Project).filter(Project.client_id == current_client.id).order_by(Project.created_at.desc()).all()
+    if isinstance(current_user, Client):
+        return db.query(Project).filter(Project.client_id == current_user.id).order_by(Project.created_at.desc()).all()
+    else:
+        # Get projects where SP has an accepted bid
+        return db.query(Project).join(Bid).filter(
+            Bid.service_provider_id == current_user.id,
+            Bid.status == "accepted"
+        ).order_by(Project.updated_at.desc()).all()
 
 @router.get("/{project_id}", response_model=schemas.Project)
 def get_project(
     project_id: int,
     db: Session = Depends(deps.get_db),
-    current_client: Client = Depends(deps.get_current_client),
+    current_user: Any = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Get a specific project.
+    - Client must be the owner.
+    - SP must have an accepted bid.
     """
-    project = db.query(Project).filter(Project.id == project_id, Project.client_id == current_client.id).first()
+    if isinstance(current_user, Client):
+        project = db.query(Project).filter(Project.id == project_id, Project.client_id == current_user.id).first()
+    else:
+        project = db.query(Project).join(Bid).filter(
+            Project.id == project_id,
+            Bid.service_provider_id == current_user.id,
+            Bid.status == "accepted"
+        ).first()
+
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
+            detail="Project not found or access denied",
         )
     return project
 

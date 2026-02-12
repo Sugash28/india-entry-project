@@ -74,22 +74,16 @@ async def create_contract(
 @router.get("/", response_model=List[schemas.Contract])
 def get_contracts(
     db: Session = Depends(deps.get_db),
-    current_client: Client = Depends(deps.get_current_client),
+    current_user: Any = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Get all contracts for the current client.
+    Get all contracts relevant to the current user.
     """
-    return db.query(Contract).filter(Contract.client_id == current_client.id).order_by(Contract.created_at.desc()).all()
+    if isinstance(current_user, Client):
+        return db.query(Contract).filter(Contract.client_id == current_user.id).order_by(Contract.created_at.desc()).all()
+    else:
+        return db.query(Contract).filter(Contract.service_provider_id == current_user.id).order_by(Contract.created_at.desc()).all()
 
-@router.get("/service-provider", response_model=List[schemas.Contract])
-def get_sp_contracts(
-    db: Session = Depends(deps.get_db),
-    current_sp: ServiceProvider = Depends(deps.get_current_service_provider),
-) -> Any:
-    """
-    Get all contracts for the current service provider.
-    """
-    return db.query(Contract).filter(Contract.service_provider_id == current_sp.id).order_by(Contract.created_at.desc()).all()
 
 @router.post("/{contract_id}/sign/service-provider", response_model=schemas.Contract)
 async def sign_contract_sp(
